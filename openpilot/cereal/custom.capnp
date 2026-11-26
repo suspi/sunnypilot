@@ -389,6 +389,15 @@ struct CarControlSP @0xa5cd762cd951a455 {
   leadOne @2 :LeadData;
   leadTwo @3 :LeadData;
   intelligentCruiseButtonManagement @4 :IntelligentCruiseButtonManagement;
+  jvePilot @5 :JvePilot;
+
+  # suspi: jvePilot features (Chrysler). Decided on the openpilot side, acted on by the car code.
+  struct JvePilot {
+    enabled @0 :Bool;
+    autoFollow @1 :Bool;
+    desiredFollowBars @2 :Int8 = -1;  # 0-3, -1 = no request
+    accEco @3 :Int8;             # 0-2
+  }
 
   struct Param {
     key @0 :Text;
@@ -453,6 +462,12 @@ struct BackupManagerSP @0xf98d843bfd7004a3 {
 
 struct CarStateSP @0xb86e6369214c01c8 {
   speedLimit @0 :Float32;
+  jvePilot @1 :JvePilot;
+
+  # suspi: jvePilot features (Chrysler)
+  struct JvePilot {
+    followBars @0 :Int8;  # ACC follow distance shown on the cluster, 0-3 (DAS_4 ACC_DISTANCE_CONFIG_2)
+  }
 }
 
 struct LiveMapDataSP @0xf416ec09499d9d19 {
