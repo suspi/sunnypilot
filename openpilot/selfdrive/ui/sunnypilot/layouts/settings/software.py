@@ -71,7 +71,11 @@ class SoftwareLayoutSP(SoftwareLayout):
       return
 
     def _confirmed(result):
-      if result != DialogResult.CONFIRM or ui_state.engaged:
+      if result != DialogResult.CONFIRM:
+        return
+      # Checked before `set`, so the selection is never changed without the reboot that goes with it
+      if ui_state.engaged:
+        gui_app.push_widget(alert_dialog(tr("Disengage to switch builds")))
         return
       rc = subprocess.run(["python3", FORK_SWITCH, "set", name], check=False).returncode
       if rc != 0:
