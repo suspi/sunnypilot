@@ -108,6 +108,14 @@ def _initialize_jvepilot(CP: structs.CarParams, CP_SP: structs.CarParamsSP, para
     if params.get_bool(param):
       CP_SP.flags |= flag.value
 
+  # jvePilot "PID steering": its gains on Chrysler platforms that default to torque (the Pacifica 2018-2020 and
+  # Grand Cherokee already use exactly these, opendbc car/chrysler/interface.py)
+  if params.get_bool("JvePilotPidSteering") and CP.lateralTuning.which() == 'torque':
+    CP.lateralTuning.init('pid')
+    CP.lateralTuning.pid.kpBP, CP.lateralTuning.pid.kiBP = [[9., 20.], [9., 20.]]
+    CP.lateralTuning.pid.kpV, CP.lateralTuning.pid.kiV = [[0.15, 0.30], [0.03, 0.05]]
+    CP.lateralTuning.pid.kf = 0.00006
+
 
 def setup_interfaces(CI: CarInterfaceBase, params: Params | None = None) -> None:
   enforce_torque = _enforce_torque_lateral_control(CI.CP, params)
