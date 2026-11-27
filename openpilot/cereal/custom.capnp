@@ -468,6 +468,7 @@ struct CarStateSP @0xb86e6369214c01c8 {
   # suspi: jvePilot features (Chrysler)
   struct JvePilot {
     followBars @0 :Int8;  # ACC follow distance shown on the cluster, 0-3 (DAS_4 ACC_DISTANCE_CONFIG_2)
+    distanceButtonPressed @1 :Bool;  # driver holds ACC_Distance_Inc or ACC_Distance_Dec
   }
 }
 

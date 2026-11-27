@@ -16,6 +16,8 @@ from openpilot.sunnypilot import PARAMS_UPDATE_PERIOD
 from openpilot.sunnypilot.livedelay.helpers import get_lat_delay
 from openpilot.sunnypilot.modeld_v2.modeld_base import ModelStateBase
 from openpilot.sunnypilot.selfdrive.controls.lib.blinker_pause_lateral import BlinkerPauseLateral
+from openpilot.sunnypilot.selfdrive.controls.lib.jvepilot_auto_follow import AutoFollow
+from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.jvepilot_params import JvePilotSettings
 from openpilot.sunnypilot.selfdrive.controls.lib.latcontrol_torque_v0 import LatControlTorque as LatControlTorqueV0
 
 
@@ -31,7 +33,11 @@ class ControlsExt(ModelStateBase):
     self.CP_SP = messaging.log_from_bytes(params.get("CarParamsSP", block=True), custom.CarParamsSP)
     cloudlog.info("controlsd_ext got CarParamsSP")
 
-    self.sm_services_ext = ['radarState', 'selfdriveStateSP']
+    # suspi: jvePilot Auto Follow ("start with Auto Follow enabled" is the JvePilotAutoFollow param)
+    self.jve = JvePilotSettings(CP.brand)
+    self.auto_follow = AutoFollow(start_enabled=self.jve.auto_follow)
+
+    self.sm_services_ext = ['radarState', 'selfdriveStateSP', 'carStateSP']
     self.pm_services_ext = ['carControlSP']
 
   def initialize_lateral_control(self, lac, CI, dt):
@@ -103,6 +109,19 @@ class ControlsExt(ModelStateBase):
     CC_SP.intelligentCruiseButtonManagement.state = icbm_src.state
     CC_SP.intelligentCruiseButtonManagement.sendButton = icbm_src.sendButton
     CC_SP.intelligentCruiseButtonManagement.vTarget = icbm_src.vTarget
+
+    # suspi: jvePilot (Chrysler)
+    self.jve.refresh()
+    CC_SP.jvePilot.enabled = self.jve.enabled
+    CC_SP.jvePilot.accEco = self.jve.acc_eco
+    CC_SP.jvePilot.desiredFollowBars = -1
+    if self.jve.enabled:
+      jve_cs = sm['carStateSP'].jvePilot
+      desired = self.auto_follow.update(sm['carState'].vEgo, jve_cs.followBars, jve_cs.distanceButtonPressed,
+                                        self.jve.auto_follow_crossovers)
+      CC_SP.jvePilot.autoFollow = self.auto_follow.enabled
+      if sm['carState'].cruiseState.enabled:
+        CC_SP.jvePilot.desiredFollowBars = desired
 
     return CC_SP
 

@@ -29,6 +29,9 @@ class JvePilotSettings:
     self.eco_rate = float(p.get("JvePilotAccEcoReductionRate", return_default=True))
     self.personality = self.enabled and p.get_bool("JvePilotPersonality")
     self.slow_in_curves = self.enabled and p.get_bool("JvePilotSlowInCurves")
+    self.auto_follow = self.enabled and p.get_bool("JvePilotAutoFollow")
+    self.auto_follow_crossovers = tuple(float(p.get(k, return_default=True)) for k in (
+      "JvePilotAutoFollowSpeed12", "JvePilotAutoFollowSpeed23", "JvePilotAutoFollowSpeed34"))
     self.curve_ratio = float(p.get("JvePilotSlowInCurvesRatio", return_default=True))
     self.curve_drop_off = float(p.get("JvePilotSlowInCurvesDropOff", return_default=True))
     self.follow_relaxed = float(p.get("JvePilotFollowRelaxed", return_default=True))

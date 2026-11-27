@@ -88,10 +88,32 @@ def _cleanup_unsupported_params(CP: structs.CarParams, CP_SP: structs.CarParamsS
   set_speed_limit_assist_availability(CP, CP_SP, params)
 
 
+def _initialize_jvepilot(CP: structs.CarParams, CP_SP: structs.CarParamsSP, params: Params | None = None) -> None:
+  """suspi: jvePilot features on Chrysler. Read once at car init: the safety bit and car flags need a reboot to change."""
+  if params is None:
+    params = Params()
+  if CP.brand != "chrysler" or not params.get_bool("JvePilotEnabled"):
+    return
+
+  from opendbc.sunnypilot.car.chrysler.values_ext import ChryslerFlagsSP, ChryslerSafetyFlagsSP
+  auto_follow = params.get_bool("JvePilotAutoFollow")
+  ready_on_start = params.get_bool("JvePilotAccReadyOnStart")
+  if auto_follow or ready_on_start:
+    CP_SP.safetyParam |= ChryslerSafetyFlagsSP.JVEPILOT_BUTTONS
+  if ready_on_start:
+    CP_SP.flags |= ChryslerFlagsSP.JVEPILOT_ACC_READY_ON_START.value
+  for param, flag in (("JvePilotWpSignal", ChryslerFlagsSP.JVEPILOT_WP_SIGNAL),
+                      ("JvePilotVisionOnly", ChryslerFlagsSP.JVEPILOT_VISION_ONLY),
+                      ("JvePilotReverseRadar", ChryslerFlagsSP.JVEPILOT_REVERSE_RADAR)):
+    if params.get_bool(param):
+      CP_SP.flags |= flag.value
+
+
 def setup_interfaces(CI: CarInterfaceBase, params: Params | None = None) -> None:
   enforce_torque = _enforce_torque_lateral_control(CI.CP, params)
   nnlc_enabled = _initialize_neural_network_lateral_control(CI.CP, CI.CP_SP, params)
   _initialize_intelligent_cruise_button_management(CI.CP, CI.CP_SP, params)
+  _initialize_jvepilot(CI.CP, CI.CP_SP, params)
   _initialize_torque_lateral_control(CI, CI.CP, enforce_torque, nnlc_enabled)
   _cleanup_unsupported_params(CI.CP, CI.CP_SP)
 
