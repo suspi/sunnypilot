@@ -249,6 +249,24 @@ class TestMonitoring(OpenpilotTestCase):
       DM._update_states(msg, [0, 0, 0], 0, True, False)
       assert DM.distracted_types['pose'] == expected
 
+  # suspi: Head Pose Slack also widens the clip on the learned (calibrated) yaw offset
+  def test_head_pose_slack_widens_learned_offset(self):
+    s = dm_settings
+    natural_yaw = 0.5  # side-mounted device: beyond stock _YAW_MAX_OFFSET, inside _YAW_MAX_OFFSET_SLACK
+    results = []
+    for slack in (False, True):
+      DM = DriverMonitoring(head_pose_slack=slack)
+      for _ in range(s._POSE_OFFSET_MIN_COUNT):
+        DM.pose.pitch_offsetter.push_and_update(0.)
+        DM.pose.yaw_offsetter.push_and_update(natural_yaw)
+      assert abs(DM.pose.yaw_offsetter.filtered_stat.mean() - natural_yaw) < 1e-6
+      DM.pose.calibrated = True
+      DM.pose.pitch, DM.pose.yaw = 0., natural_yaw + 0.45
+      DM._get_distracted_types()
+      results.append(DM.distracted_types['pose'])
+    # stock clip: error 0.95 - 0.289 = 0.661 exceeds even the x1.5 threshold (0.603), so only the wider clip clears it
+    assert results == [True, False]
+
 
 def _build_sm(selfdrive_enabled, lat_active, steering_pressed, gas_pressed):
   cs = car.CarState.new_message()
