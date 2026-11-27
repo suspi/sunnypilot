@@ -27,3 +27,7 @@ class JvePilotSettings:
     self.eco_ahead1 = float(p.get("JvePilotAccEcoSpeedAhead1", return_default=True))
     self.eco_ahead2 = float(p.get("JvePilotAccEcoSpeedAhead2", return_default=True))
     self.eco_rate = float(p.get("JvePilotAccEcoReductionRate", return_default=True))
+    self.personality = self.enabled and p.get_bool("JvePilotPersonality")
+    self.follow_relaxed = float(p.get("JvePilotFollowRelaxed", return_default=True))
+    self.follow_standard = float(p.get("JvePilotFollowStandard", return_default=True))
+    self.follow_aggressive = float(p.get("JvePilotFollowAggressive", return_default=True))

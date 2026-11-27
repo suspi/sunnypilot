@@ -307,8 +307,9 @@ class LongitudinalMpc:
     lead_xv = self.extrapolate_lead(x_lead, v_lead, a_lead, a_lead_tau)
     return lead_xv
 
-  def update(self, radarstate, personality=log.LongitudinalPersonality.standard):
-    t_follow = get_T_FOLLOW(personality)
+  def update(self, radarstate, personality=log.LongitudinalPersonality.standard, t_follow_override=None):
+    # suspi: jvePilot's own follow times replace the personality's when set
+    t_follow = t_follow_override if t_follow_override is not None else get_T_FOLLOW(personality)
 
     lead_xv_0 = self.process_lead(radarstate.leadOne)
     lead_xv_1 = self.process_lead(radarstate.leadTwo)
