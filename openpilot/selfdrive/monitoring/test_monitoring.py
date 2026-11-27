@@ -52,8 +52,8 @@ always_true = [True] * int(TEST_TIMESPAN / DT_DMON)
 always_false = [False] * int(TEST_TIMESPAN / DT_DMON)
 
 class TestMonitoring(OpenpilotTestCase):
-  def _run_seq(self, msgs, interaction, engaged, lowspeed):
-    DM = DriverMonitoring()
+  def _run_seq(self, msgs, interaction, engaged, lowspeed, **dm_kwargs):
+    DM = DriverMonitoring(**dm_kwargs)
     alert_lvls = []
     for idx in range(len(msgs)):
       DM._update_states(msgs[idx], [0, 0, 0], 0, engaged[idx], lowspeed[idx])
@@ -230,6 +230,24 @@ class TestMonitoring(OpenpilotTestCase):
     assert alert_lvls[int((INVISIBLE_SECONDS_TO_ORANGE-1+DT_DMON*s._HI_STD_FALLBACK_TIME-0.1)/DT_DMON)] == 1
     assert alert_lvls[int((INVISIBLE_SECONDS_TO_ORANGE-1+DT_DMON*s._HI_STD_FALLBACK_TIME+0.1)/DT_DMON)] == 2
     assert alert_lvls[int((INVISIBLE_SECONDS_TO_RED-1+DT_DMON*s._HI_STD_FALLBACK_TIME+0.1)/DT_DMON)] == 3
+
+  # suspi: Glasses Mode ignores eye/blink signals, so "eyes closed" alone never alerts
+  def test_glasses_mode_ignores_blink(self):
+    alert_lvls, d_status = self._run_seq(always_distracted, always_false, always_true, always_false, glasses_mode=True)
+    assert all(a == 0 for a in alert_lvls)
+    assert not d_status.distracted_types['eye']
+
+  # suspi: Head Pose Slack lets a yaw between the stock and the slack threshold pass
+  def test_head_pose_slack_widens_yaw(self):
+    s = dm_settings
+    # uncalibrated: yaw error is measured from _YAW_NATURAL_OFFSET; pick an error halfway between the thresholds
+    yaw_error = s._POSE_YAW_THRESHOLD * (1 + s._POSE_THRESHOLD_SLACK_FACTOR) / 2
+    msg = make_msg(True)
+    msg.leftDriverData.faceOrientation = [0., -(s._YAW_NATURAL_OFFSET + yaw_error), 0.]
+    for slack, expected in ((False, True), (True, False)):
+      DM = DriverMonitoring(head_pose_slack=slack)
+      DM._update_states(msg, [0, 0, 0], 0, True, False)
+      assert DM.distracted_types['pose'] == expected
 
 
 def _build_sm(selfdrive_enabled, lat_active, steering_pressed, gas_pressed):

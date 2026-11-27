@@ -70,6 +70,12 @@ class DRIVER_MONITOR_SETTINGS:
     self._PITCH_MIN_OFFSET = -0.0881
     self._YAW_MAX_OFFSET = 0.289
     self._YAW_MIN_OFFSET = -0.0246
+    # suspi: Head Pose Slack (DMHeadPoseSlack) for a device mounted far to the side
+    self._PITCH_MAX_OFFSET_SLACK = 0.25
+    self._PITCH_MIN_OFFSET_SLACK = -0.20
+    self._YAW_MAX_OFFSET_SLACK = 0.55
+    self._YAW_MIN_OFFSET_SLACK = -0.35
+    self._POSE_THRESHOLD_SLACK_FACTOR = 1.5
 
     self._DCAM_UNCERTAIN_ALERT_THRESHOLD = 0.1
     self._DCAM_UNCERTAIN_ALERT_COUNT = int(60  / DT_DMON)
@@ -129,7 +135,7 @@ def face_orientation_from_model(orient_model, pos_model, rpy_calib):
 
 
 class DriverMonitoring:
-  def __init__(self, rhd_saved=False, settings=None, always_on=False):
+  def __init__(self, rhd_saved=False, settings=None, always_on=False, glasses_mode=False, head_pose_slack=False):
     # init policy settings
     self.settings = settings if settings is not None else DRIVER_MONITOR_SETTINGS()
 
@@ -143,6 +149,8 @@ class DriverMonitoring:
 
     self.alert_level = AlertLevel.none
     self.always_on = always_on
+    self.glasses_mode = glasses_mode  # suspi: ignore eye/blink signals, head pose only
+    self.head_pose_slack = head_pose_slack  # suspi: wider learned offset range and pose thresholds
     self.distracted_types = defaultdict(bool)
     self.driver_distracted = False
     self.driver_distraction_filter = FirstOrderFilter(0., self.settings._DISTRACTED_FILTER_TS, DT_DMON)
@@ -225,10 +233,14 @@ class DriverMonitoring:
       pitch_error = self.pose.pitch - self.settings._PITCH_NATURAL_OFFSET
       yaw_error = self.pose.yaw - self.settings._YAW_NATURAL_OFFSET
     else:
-      pitch_error = self.pose.pitch - min(max(self.pose.pitch_offsetter.filtered_stat.mean(),
-                                                       self.settings._PITCH_MIN_OFFSET), self.settings._PITCH_MAX_OFFSET)
-      yaw_error = self.pose.yaw - min(max(self.pose.yaw_offsetter.filtered_stat.mean(),
-                                                    self.settings._YAW_MIN_OFFSET), self.settings._YAW_MAX_OFFSET)
+      if self.head_pose_slack:
+        pitch_min, pitch_max = self.settings._PITCH_MIN_OFFSET_SLACK, self.settings._PITCH_MAX_OFFSET_SLACK
+        yaw_min, yaw_max = self.settings._YAW_MIN_OFFSET_SLACK, self.settings._YAW_MAX_OFFSET_SLACK
+      else:
+        pitch_min, pitch_max = self.settings._PITCH_MIN_OFFSET, self.settings._PITCH_MAX_OFFSET
+        yaw_min, yaw_max = self.settings._YAW_MIN_OFFSET, self.settings._YAW_MAX_OFFSET
+      pitch_error = self.pose.pitch - min(max(self.pose.pitch_offsetter.filtered_stat.mean(), pitch_min), pitch_max)
+      yaw_error = self.pose.yaw - min(max(self.pose.yaw_offsetter.filtered_stat.mean(), yaw_min), yaw_max)
     pitch_error = 0 if pitch_error > 0 else abs(pitch_error) # no positive pitch limit
 
     if yaw_error * self.pose.steer_yaw_offset > 0: # unidirectional
@@ -238,6 +250,9 @@ class DriverMonitoring:
 
     pitch_threshold = self.settings._POSE_PITCH_THRESHOLD * self.pose.cfactor_pitch if self.pose.calibrated else self.settings._PITCH_NATURAL_THRESHOLD
     yaw_threshold = self.settings._POSE_YAW_THRESHOLD * self.pose.cfactor_yaw
+    if self.head_pose_slack:
+      pitch_threshold *= self.settings._POSE_THRESHOLD_SLACK_FACTOR
+      yaw_threshold *= self.settings._POSE_THRESHOLD_SLACK_FACTOR
 
     self.distracted_types['pose'] = bool((pitch_error > pitch_threshold) or (yaw_error > yaw_threshold))
     self.distracted_types['eye'] = bool((self.blink.left + self.blink.right)*0.5 > self.settings._BLINK_THRESHOLD)
@@ -279,6 +294,9 @@ class DriverMonitoring:
                       * (driver_data.sunglassesProb < self.settings._SG_THRESHOLD)
     self.blink.right = driver_data.rightBlinkProb * (driver_data.rightEyeProb > self.settings._EYE_THRESHOLD) \
                       * (driver_data.sunglassesProb < self.settings._SG_THRESHOLD)
+    if self.glasses_mode:
+      self.blink.left = 0.
+      self.blink.right = 0.
     self.phone_prob = driver_data.phoneProb
     self.sleep_prob = driver_data.sleepProb
 
