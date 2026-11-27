@@ -17,6 +17,8 @@ from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit.speed_limit_assist 
 from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit.speed_limit_resolver import SpeedLimitResolver
 from openpilot.sunnypilot.selfdrive.selfdrived.events import EventsSP
 from openpilot.sunnypilot.models.helpers import get_active_bundle
+from openpilot.sunnypilot.selfdrive.controls.lib.jvepilot_curves import limit_speed_in_curve
+from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.jvepilot_params import JvePilotSettings
 
 LongitudinalPlanSource = custom.LongitudinalPlanSP.LongitudinalPlanSource
 
@@ -35,6 +37,7 @@ class LongitudinalPlannerSP:
     self.openpilot_longitudinal = CP.openpilotLongitudinalControl
 
     self.output_v_target = 0.
+    self.jve = JvePilotSettings(CP.brand)  # suspi: jvePilot features (Chrysler)
     self.output_a_target = 0.
 
   def update_targets(self, sm: messaging.SubMaster, v_ego: float, a_ego: float, v_cruise: float) -> tuple[float, float]:
@@ -62,6 +65,13 @@ class LongitudinalPlannerSP:
       LongitudinalPlanSource.sccMap: (self.scc.map.output_v_target, self.scc.map.output_a_target),
       LongitudinalPlanSource.speedLimitAssist: (self.sla.output_v_target, self.sla.output_a_target),
     }
+
+    # suspi: jvePilot Slow in Curves, off in experimental mode as in jvePilot
+    self.jve.refresh()
+    curvature = sm['controlsState'].desiredCurvature
+    if self.jve.slow_in_curves and not sm['selfdriveState'].experimentalMode and curvature != 0:
+      targets[LongitudinalPlanSource.jvePilotSlowInCurves] = (
+        limit_speed_in_curve(v_ego, curvature, self.jve.curve_ratio, self.jve.curve_drop_off), a_ego)
 
     self.source = min(targets, key=lambda k: targets[k][0])
     self.output_v_target, self.output_a_target = targets[self.source]

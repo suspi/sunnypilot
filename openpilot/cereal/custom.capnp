@@ -306,6 +306,7 @@ struct LongitudinalPlanSP @0xf35cc4560bbf6ec2 {
     sccVision @1;
     sccMap @2;
     speedLimitAssist @3;
+    jvePilotSlowInCurves @4;  # suspi
   }
 
   struct E2eAlerts {
