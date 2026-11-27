@@ -95,11 +95,15 @@ def _initialize_jvepilot(CP: structs.CarParams, CP_SP: structs.CarParamsSP, para
   if CP.brand != "chrysler" or not params.get_bool("JvePilotEnabled"):
     return
 
+  from opendbc.car.chrysler.values import RAM_CARS
   from opendbc.sunnypilot.car.chrysler.values_ext import ChryslerFlagsSP, ChryslerSafetyFlagsSP
-  auto_follow = params.get_bool("JvePilotAutoFollow")
+  if CP.carFingerprint in RAM_CARS:
+    return  # jvePilot's button and LKAS_COMMAND layouts were ported and checked for the Pacifica/Jeep family only
+
   ready_on_start = params.get_bool("JvePilotAccReadyOnStart")
-  if auto_follow or ready_on_start:
-    CP_SP.safetyParam |= ChryslerSafetyFlagsSP.JVEPILOT_BUTTONS
+  # Auto Follow can be switched on at any time by holding a distance button, so the button allowance is always granted
+  # with jvePilot features on.
+  CP_SP.safetyParam |= ChryslerSafetyFlagsSP.JVEPILOT_BUTTONS
   if ready_on_start:
     CP_SP.flags |= ChryslerFlagsSP.JVEPILOT_ACC_READY_ON_START.value
   for param, flag in (("JvePilotWpSignal", ChryslerFlagsSP.JVEPILOT_WP_SIGNAL),

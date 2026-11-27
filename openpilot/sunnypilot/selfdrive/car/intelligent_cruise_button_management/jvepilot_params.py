@@ -11,8 +11,10 @@ REFRESH_S = 1.0
 _STEER_LOSS_CACHE = {"t": -REFRESH_S, "value": True}
 
 
-def steer_loss_alert_enabled() -> bool:
-  """jvePilot 'Audio alert on steering loss'. Default on, and on unless jvePilot features are on and it is off."""
+def steer_loss_alert_enabled(brand: str) -> bool:
+  """jvePilot 'Audio alert on steering loss'. On unless this is a Chrysler with jvePilot features on and it off."""
+  if brand != "chrysler":
+    return True
   now = time.monotonic()
   if now - _STEER_LOSS_CACHE["t"] >= REFRESH_S:
     p = Params()

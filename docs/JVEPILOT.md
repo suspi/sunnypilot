@@ -4,7 +4,8 @@ This build of sunnypilot carries jvePilot's Chrysler features behind one switch:
 **Vehicle → Chrysler → jvePilot features**. With the switch off, the build is plain sunnypilot. The switch only
 works on Chrysler/FCA cars and is settable only offroad.
 
-Turning it on also sets sunnypilot's own versions of jvePilot features that sunnypilot already has:
+Turning it on also sets sunnypilot's own versions of jvePilot features that sunnypilot already has. Turning it off
+leaves these as they are:
 - MADS on, with Main Cruise Allowed and Steering Mode on Brake = Remain Active. This is jvePilot's always-on
   lateral: the van keeps steering while you use the gas or brake.
 - Intelligent Cruise Button Management on. It carries the plan-following set speed below.
@@ -27,10 +28,11 @@ Reboot after changing anything marked "after a reboot".
 
 ## Panda safety
 
-Auto Follow and ACC Ready on Start press buttons that sunnypilot's Chrysler safety mode refuses. When either is on,
-the car init sets SP safety param bit `JVEPILOT_BUTTONS`, which allows:
+Auto Follow and ACC Ready on Start press buttons that sunnypilot's Chrysler safety mode refuses. With jvePilot
+features on, the car init sets SP safety param bit `JVEPILOT_BUTTONS` on the Pacifica/Jeep platforms (never on Ram,
+whose button layout was not checked). The bit allows:
 - one distance button (optionally with one of accel or decel) while engaged;
-- ACC On/Off alone at any time.
+- ACC On/Off alone while ACC main is off. It can switch ACC on, never off.
 
 Nothing else changes, and without the bit the safety check is sunnypilot's
 (`opendbc_repo/opendbc/safety/modes/chrysler.h`; tests in `opendbc/safety/tests/test_chrysler.py`).

@@ -4,13 +4,14 @@ suspi: jvePilot's driving personality from the ACC distance bars and the Eco lev
 Ported from jvePilot-beta 1508b2a: opendbc/car/chrysler/values.py DRIVE_PERSONALITY, carcontroller.py:145-152,
 selfdrive/controls/lib/longitudinal_mpc_lib/long_mpc.py:78-82. Pure logic.
 """
-RELAXED, STANDARD, AGGRESSIVE = 0, 1, 2  # log.LongitudinalPersonality enumerants
+AGGRESSIVE, STANDARD, RELAXED = 0, 1, 2  # log.LongitudinalPersonality enumerants (cereal/log.capnp)
 
-# [eco level][follow bars 0-3] -> personality
+# [eco level][follow bars 0-3] -> personality; jvePilot's raw table [[0,0,1,2],[0,1,1,2],[0,1,2,2]]:
+# more bars = longer gap = more relaxed, and higher Eco moves toward relaxed sooner
 DRIVE_PERSONALITY = [
-  [RELAXED, RELAXED, STANDARD, AGGRESSIVE],
-  [RELAXED, STANDARD, STANDARD, AGGRESSIVE],
-  [RELAXED, STANDARD, AGGRESSIVE, AGGRESSIVE],
+  [AGGRESSIVE, AGGRESSIVE, STANDARD, RELAXED],
+  [AGGRESSIVE, STANDARD, STANDARD, RELAXED],
+  [AGGRESSIVE, STANDARD, RELAXED, RELAXED],
 ]
 
 

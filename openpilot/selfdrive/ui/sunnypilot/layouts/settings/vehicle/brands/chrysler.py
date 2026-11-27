@@ -5,6 +5,7 @@ This file is part of sunnypilot and is licensed under the MIT License.
 See the LICENSE.md file in the root directory for more details.
 """
 from openpilot.selfdrive.ui.sunnypilot.layouts.settings.vehicle.brands.base import BrandSettings
+from openpilot.sunnypilot.mads.helpers import MadsSteeringModeOnBrake
 from openpilot.selfdrive.ui.ui_state import ui_state
 from openpilot.system.ui.lib.multilang import tr
 from openpilot.system.ui.sunnypilot.widgets.list_view import option_item_sp, toggle_item_sp
@@ -13,7 +14,7 @@ from openpilot.system.ui.sunnypilot.widgets.list_view import option_item_sp, tog
 # MADS = Always-On Lateral (steer with ACC ready, keep steering through brake and gas), and ICBM, which carries the
 # plan-following ACC set speed.
 JVEPILOT_PRESET = {"Mads": True, "MadsMainCruiseAllowed": True, "IntelligentCruiseButtonManagement": True}
-JVEPILOT_PRESET_INT = {"MadsSteeringMode": 0}  # MadsSteeringModeOnBrake.REMAIN_ACTIVE
+JVEPILOT_PRESET_INT = {"MadsSteeringMode": MadsSteeringModeOnBrake.REMAIN_ACTIVE}
 
 
 def _float_label(scale=100.0, fmt="%.2f"):
@@ -24,9 +25,10 @@ class ChryslerSettings(BrandSettings):
   def __init__(self):
     super().__init__()
     self.master = toggle_item_sp(tr("jvePilot features"),
-                                 tr("jvePilot's Chrysler features on top of sunnypilot. Off = plain sunnypilot. "
-                                    "Turning it on also enables MADS (always-on steering, kept through brake and gas) "
-                                    "and Intelligent Cruise Button Management. Takes effect after a reboot."),
+                                 tr("jvePilot's Chrysler features on top of sunnypilot. Turning it on also enables "
+                                    "MADS (always-on steering, kept through brake and gas) and Intelligent Cruise "
+                                    "Button Management; turning it off leaves those two as they are. Takes effect after "
+                                    "a reboot."),
                                  param="JvePilotEnabled", callback=self._on_master)
 
     self.sub = [

@@ -30,7 +30,8 @@ class ModelRendererSP:
     if now - self._jve_highlight_checked > 1.0:
       self._jve_highlight_checked = now
       p = ui_state.params
-      self._jve_highlight = p.get_bool("JvePilotEnabled") and p.get_bool("JvePilotBlindspotHighlight")
+      chrysler = ui_state.CP is not None and ui_state.CP.brand == "chrysler"
+      self._jve_highlight = chrysler and p.get_bool("JvePilotEnabled") and p.get_bool("JvePilotBlindspotHighlight")
     if not self._jve_highlight:
       return False, False
     cs = ui_state.sm['carState']

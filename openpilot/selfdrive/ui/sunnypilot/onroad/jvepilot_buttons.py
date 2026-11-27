@@ -27,7 +27,8 @@ class JvePilotButtons:
     if now - self._checked > 0.5:
       self._checked = now
       p = ui_state.params
-      self._enabled = p.get_bool("JvePilotEnabled")
+      chrysler = ui_state.CP is not None and ui_state.CP.brand == "chrysler"
+      self._enabled = chrysler and p.get_bool("JvePilotEnabled")
       self._eco = int(p.get("JvePilotAccEco", return_default=True) or 0)
 
   def render(self, rect: rl.Rectangle) -> None:
