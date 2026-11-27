@@ -33,6 +33,10 @@ DESCRIPTIONS = {
     "without a turn signal activated while driving over 31 mph (50 km/h)."
   ),
   "AlwaysOnDM": tr_noop("Enable driver monitoring even when sunnypilot is not engaged."),
+  "DMGlassesMode": tr_noop("Ignore eye and blink tracking, which glasses can confuse. " +
+                           "Driver monitoring then uses head direction, phone and sleep detection only."),
+  "DMHeadPoseSlack": tr_noop("Allow more head turn and tilt before alerting, and let the learned head position " +
+                             "move further from center. For a device mounted far to the side."),
   'RecordFront': tr_noop("Upload data from the driver facing camera and help improve the driver monitoring algorithm."),
   "IsMetric": tr_noop("Display speed in km/h instead of mph."),
   "RecordAudio": tr_noop("Record and store microphone audio while driving. The audio will be included in the dashcam video in comma connect."),
@@ -67,6 +71,18 @@ class TogglesLayout(Widget):
       "AlwaysOnDM": (
         lambda: tr("Always-On Driver Monitoring"),
         DESCRIPTIONS["AlwaysOnDM"],
+        "monitoring.png",
+        False,
+      ),
+      "DMGlassesMode": (
+        lambda: tr("Driver Monitoring: Glasses Mode"),
+        DESCRIPTIONS["DMGlassesMode"],
+        "monitoring.png",
+        False,
+      ),
+      "DMHeadPoseSlack": (
+        lambda: tr("Driver Monitoring: Head Pose Slack"),
+        DESCRIPTIONS["DMHeadPoseSlack"],
         "monitoring.png",
         False,
       ),

@@ -144,7 +144,7 @@ lines ~87-98.
 | `controls/` | planning + actuation | `controlsd.py`, `plannerd.py`, `radard.py`; `lib/`: `longitudinal_planner.py`, `longitudinal_mpc_lib/long_mpc.py`, `longcontrol.py`, `latcontrol_{pid,angle,curvature,torque}.py`, `drive_helpers.py`, `desire_helper.py`, `ldw.py` |
 | `modeld/` | stock driving model + driver-monitoring model | `modeld.py: ModelState`, `fill_model_msg.py`, `parse_model_outputs.py`, `dmonitoringmodeld.py` |
 | `locationd/` | localization + online learners (see below) | `locationd.py`, `calibrationd.py`, `paramsd.py`, `torqued.py`, `lagd.py` |
-| `monitoring/` | driver attention policy | `dmonitoringd.py`, `policy.py: DriverMonitoring` |
+| `monitoring/` | driver attention policy; fork toggles `DMGlassesMode` (ignore blink) and `DMHeadPoseSlack` (wider pose offset clip, thresholds x1.5) | `dmonitoringd.py`, `policy.py: DriverMonitoring` |
 | `navigation/` | routing + map tiles | `navd.py: RouteEngine` (navInstruction/navRoute), `mapsd.py` (VisionIPC map stream) |
 | `ui/` | on-device UI (§4 UI) | `ui.py`, `ui_state.py`, `soundd.py`, `layouts/`, `onroad/`, `mici/`, `sunnypilot/`, `translations/` |
 | `test/` | process replay, onroad tests | `process_replay/{test_processes.py,model_replay.py,process_replay.py}`, `test_onroad.py` |

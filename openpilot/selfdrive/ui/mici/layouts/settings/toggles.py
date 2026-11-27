@@ -26,6 +26,12 @@ class TogglesLayoutMici(NavScroller):
                                  description="Warn when you drift across a detected lane line.\n" +
                                              "Only above 31 mph (50 km/h), with no turn signal.")
     always_on_dm_toggle = BigParamControl("always-on driver monitor", "AlwaysOnDM", description="Monitor the driver even when sunnypilot is not engaged.")
+    dm_glasses_toggle = BigParamControl("dm glasses mode", "DMGlassesMode",
+                                        description="Ignore eye tracking, which glasses can confuse.\n" +
+                                                    "Head direction, phone and sleep detection only.")
+    dm_head_slack_toggle = BigParamControl("dm head pose slack", "DMHeadPoseSlack",
+                                           description="Allow more head turn and tilt before alerting.\n" +
+                                                       "For a device mounted far to the side.")
     record_front = BigParamControl("record & upload cabin camera", "RecordFront",
                                    description_icon=gui_app.texture("icons_mici/settings/device/cameras.png", 64, 64),
                                    toggle_callback=restart_needed_callback, description="Upload cabin camera data to help improve driver monitoring.")
@@ -44,6 +50,8 @@ class TogglesLayoutMici(NavScroller):
       is_metric_toggle,
       ldw_toggle,
       always_on_dm_toggle,
+      dm_glasses_toggle,
+      dm_head_slack_toggle,
       record_front,
       record_mic,
       enable_openpilot,
@@ -54,6 +62,8 @@ class TogglesLayoutMici(NavScroller):
       ("IsMetric", is_metric_toggle),
       ("IsLdwEnabled", ldw_toggle),
       ("AlwaysOnDM", always_on_dm_toggle),
+      ("DMGlassesMode", dm_glasses_toggle),
+      ("DMHeadPoseSlack", dm_head_slack_toggle),
       ("RecordFront", record_front),
       ("RecordAudio", record_mic),
       ("OpenpilotEnabledToggle", enable_openpilot),
