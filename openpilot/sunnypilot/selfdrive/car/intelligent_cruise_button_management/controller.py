@@ -11,6 +11,9 @@ from openpilot.common.constants import CV
 from openpilot.common.realtime import DT_CTRL
 from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.helpers import get_minimum_set_speed
 from openpilot.sunnypilot.selfdrive.car.cruise_ext import CRUISE_BUTTON_TIMER, update_manual_button_timers
+from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.jvepilot_params import JvePilotSettings
+from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.jvepilot_target import (
+  PlanAccTarget, allow_throttle, to_cluster_units)
 
 LongitudinalPlanSource = custom.LongitudinalPlanSP.LongitudinalPlanSource
 State = custom.IntelligentCruiseButtonManagement.IntelligentCruiseButtonManagementState
@@ -46,17 +49,30 @@ class IntelligentCruiseButtonManagement:
 
     self.cruise_button_timers = CRUISE_BUTTON_TIMER
 
+    # suspi: jvePilot's plan-following ACC (Chrysler, behind JvePilotEnabled + JvePilotPlanAcc)
+    self.jve = JvePilotSettings(CP.brand)
+    self.jve_target = PlanAccTarget()
+
   @property
   def v_cruise_equal(self) -> bool:
     return self.v_target == self.v_cruise_cluster
 
-  def update_calculations(self, CS: car.CarState, LP_SP: custom.LongitudinalPlanSP) -> None:
+  def update_calculations(self, CS: car.CarState, LP_SP: custom.LongitudinalPlanSP, LP=None, model=None) -> None:
     speed_conv = CV.MS_TO_KPH if self.is_metric else CV.MS_TO_MPH
     ms_conv = CV.KPH_TO_MS if self.is_metric else CV.MPH_TO_MS
 
-    self.v_target_ms_last = apply_hysteresis(LP_SP.vTarget, self.v_target_ms_last, HYST_GAP * ms_conv)
-
-    self.v_target = round(self.v_target_ms_last * speed_conv)
+    self.jve.refresh()
+    if self.jve.plan_acc and LP is not None:
+      # jvePilot: follow openpilot's whole plan (lead cars, model, coasting), but never above the speed SCC/SLA allow
+      throttle = allow_throttle(CS.vEgo, model.meta.disengagePredictions.gasPressProbs if model is not None else [])
+      v_cruise = min(CS.vCruise * CV.KPH_TO_MS, LP_SP.vTarget)
+      target = self.jve_target.update(CS.vEgo, list(LP.speeds), list(LP.accels), throttle, v_cruise,
+                                      self.jve.acc_eco, self.jve.eco_ahead1, self.jve.eco_ahead2, self.jve.eco_rate)
+      self.v_target_ms_last = target
+      self.v_target = to_cluster_units(target, self.is_metric)
+    else:
+      self.v_target_ms_last = apply_hysteresis(LP_SP.vTarget, self.v_target_ms_last, HYST_GAP * ms_conv)
+      self.v_target = round(self.v_target_ms_last * speed_conv)
     self.v_cruise_min = get_minimum_set_speed(self.is_metric)
     self.v_cruise_cluster = round(CS.cruiseState.speedCluster * speed_conv)
 
@@ -114,13 +130,14 @@ class IntelligentCruiseButtonManagement:
 
     self.is_ready = ready and not button_pressed
 
-  def run(self, CS: car.CarState, CC: car.CarControl, LP_SP: custom.LongitudinalPlanSP, is_metric: bool) -> None:
+  def run(self, CS: car.CarState, CC: car.CarControl, LP_SP: custom.LongitudinalPlanSP, is_metric: bool,
+          LP=None, model=None) -> None:
     if self.CP_SP.pcmCruiseSpeed:
       return
 
     self.is_metric = is_metric
 
-    self.update_calculations(CS, LP_SP)
+    self.update_calculations(CS, LP_SP, LP, model)
     self.update_readiness(CS, CC)
 
     self.cruise_button = self.update_state_machine()

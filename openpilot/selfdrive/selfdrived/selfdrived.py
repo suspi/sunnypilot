@@ -518,7 +518,8 @@ class SelfdriveD:
         self.params.put('LongitudinalPersonality', self.personality)
         self.events.add(EventName.personalityChanged)
 
-    self.icbm.run(CS, self.sm['carControl'], self.sm['longitudinalPlanSP'], self.is_metric)
+    self.icbm.run(CS, self.sm['carControl'], self.sm['longitudinalPlanSP'], self.is_metric,
+                  self.sm['longitudinalPlan'], self.sm['modelV2'])
 
   def data_sample(self):
     _car_state = messaging.recv_one(self.car_state_sock)
