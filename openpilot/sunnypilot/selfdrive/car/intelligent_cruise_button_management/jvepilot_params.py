@@ -8,6 +8,19 @@ from openpilot.common.params import Params
 REFRESH_S = 1.0
 
 
+_STEER_LOSS_CACHE = {"t": -REFRESH_S, "value": True}
+
+
+def steer_loss_alert_enabled() -> bool:
+  """jvePilot 'Audio alert on steering loss'. Default on, and on unless jvePilot features are on and it is off."""
+  now = time.monotonic()
+  if now - _STEER_LOSS_CACHE["t"] >= REFRESH_S:
+    p = Params()
+    _STEER_LOSS_CACHE["value"] = not p.get_bool("JvePilotEnabled") or p.get_bool("JvePilotSteerLossAlert")
+    _STEER_LOSS_CACHE["t"] = now
+  return _STEER_LOSS_CACHE["value"]
+
+
 class JvePilotSettings:
   def __init__(self, brand: str):
     self.params = Params()

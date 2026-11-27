@@ -79,11 +79,13 @@ def below_engage_speed_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.
 
 
 def below_steer_speed_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.SubMaster, metric: bool, soft_disable_time: int, personality) -> Alert:
+  # suspi: jvePilot "Audio alert on steering loss" can silence the chime
+  from openpilot.sunnypilot.selfdrive.car.intelligent_cruise_button_management.jvepilot_params import steer_loss_alert_enabled
   return Alert(
     f"Steer Assist Unavailable Below {get_display_speed(CP.minSteerSpeed, metric)}",
     "",
     AlertStatus.userPrompt, AlertSize.small,
-    Priority.LOW, VisualAlert.none, AudibleAlert.prompt, 0.4)
+    Priority.LOW, VisualAlert.none, AudibleAlert.prompt if steer_loss_alert_enabled() else AudibleAlert.none, 0.4)
 
 
 def calibration_incomplete_alert(CP: car.CarParams, CS: car.CarState, sm: messaging.SubMaster, metric: bool, soft_disable_time: int, personality) -> Alert:

@@ -257,12 +257,15 @@ class ModelRenderer(Widget, ChevronMetrics, ModelRendererSP):
 
   def _draw_lane_lines(self):
     """Draw lane lines and road edges"""
+    left_bsm, right_bsm = self._blindspot_lane_highlight()  # suspi: jvePilot blindspot lane highlight
     for i, lane_line in enumerate(self._lane_lines):
       if lane_line.projected_points.size == 0:
         continue
 
       alpha = np.clip(self._lane_line_probs[i], 0.0, 0.7)
       color = rl.Color(255, 255, 255, int(alpha * 255))
+      if (i == 1 and left_bsm) or (i == 2 and right_bsm):
+        color = rl.Color(255, 0, 0, 255)
       draw_polygon(self._rect, lane_line.projected_points, color)
 
     for i, road_edge in enumerate(self._road_edges):
